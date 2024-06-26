@@ -26,6 +26,7 @@ class Ship:
         # 左移标志(一开始不移动)
         self.moving_left = False
 
+
     # 判断移动状态
     def update(self):
         '''根据移动标志调整飞船的位置'''
@@ -38,6 +39,11 @@ class Ship:
             self.x -= self.settings.ship_speed
         # 根据 self.x 更新 rect 对象
         self.rect.x = self.x
+    
+    def center_ship(self):
+        """将飞船放在屏幕底部的中央"""
+        self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)
 
     
 
