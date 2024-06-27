@@ -10,9 +10,9 @@ class Button:
         self.width, self.height = 200, 50
         self.button_color = (0, 135, 0)
         self.text_color = (255, 255, 255)
-        # self.font = pygame.font.SysFont(None, 48)
+        self.font = pygame.font.SysFont(None, 48)
         # 中文
-        self.font = pygame.font.SysFont('simsunnsimsun', 40)
+        # self.font = pygame.font.SysFont('simsunnsimsun', 40)
         # 创建按钮的 rect 对象，并使其居中
         self.rect = pygame.Rect(0, 0, self.width, self.height)
         self.rect.center = self.screen_rect.center

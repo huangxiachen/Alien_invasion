@@ -1,14 +1,16 @@
 import os
 import sys
 import pygame
+from pygame.sprite import Sprite
 
 # 设置工作路径
 os.chdir(os.path.dirname(sys.argv[0]))
 
-class Ship:
+class Ship(Sprite):
     '''管理飞船的模块'''
     def __init__(self,ai_game):
         #初始化飞船并设置初始置
+        super().__init__()
         self.screen = ai_game.screen
         self.settings = ai_game.settings
         self.screen_rect = ai_game.screen.get_rect()

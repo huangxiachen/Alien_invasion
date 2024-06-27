@@ -7,6 +7,7 @@ from ship import Ship
 from bullet import Bullet
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -42,11 +43,37 @@ class AlienInvasion:
         # 加载外星人
         self.aliens = pygame.sprite.Group()
         self._create_fleet()
-        # 游戏启动后处于活动状态
-        self.game_active = True
+        # 游戏一开始处于非活动状态
+        self.game_active = False
         # 创建开始和结束标志
         # 创建 Play 按钮
-        self.play_button = Button(self, "开始游戏")
+        self.play_button = Button(self, "Play")
+        # 创建分数实例
+        # 创建存储游戏统计信息的实例，并创建记分牌
+        self.stats = GameStats(self)
+        self.sb = Scoreboard(self)
+
+    
+    def ___update_screen(self):
+        """更新屏幕上的图像，并切换到新屏幕"""
+        # 每次循环多重绘屏幕
+        # self.screen.fill(self.bg_color)
+        self.screen.fill(self.settings.bg_color)
+         # 在指定位置绘制飞船
+        self.ship.blitme()
+        # 绘制子弹
+        for bullet in self.bullets.sprites():
+            bullet.draw_bullet()
+        # 在指定位置绘制外星人
+        self.aliens.draw(self.screen)
+        # 显示得分
+        self.sb.show_score()
+        # 如果游戏处于非活动状态，就绘制 Play 按钮
+        if not self.game_active:
+            self.play_button.draw_button()
+        # 让最近绘制的屏幕可见
+        pygame.display.flip()
+
     '''
     这将呈现一个游戏窗口，需要将其置于无限事件循环中。
     所有由用户交互产生的事件对象，如鼠标移动和点击等，
@@ -89,22 +116,7 @@ class AlienInvasion:
     为了进一步简化 run_game()，我们把更新屏幕的代码移到一个名为
     __update_screen() 的方法中
     '''
-    def ___update_screen(self):
-        """更新屏幕上的图像，并切换到新屏幕"""
-        # 每次循环多重绘屏幕
-        # self.screen.fill(self.bg_color)
-        self.screen.fill(self.settings.bg_color)
-         # 在指定位置绘制飞船
-        self.ship.blitme()
-        # 绘制子弹
-        for bullet in self.bullets.sprites():
-            bullet.draw_bullet()
-        # 在指定位置绘制外星人
-        self.aliens.draw(self.screen)
-        # 绘制按钮
-        self.play_button.draw_button()
-        # 让最近绘制的屏幕可见
-        pygame.display.flip()
+
     
     '''
     我们将把管理事件的代码移到一个名为 _check_events() 的方法中，以简化
@@ -133,6 +145,9 @@ class AlienInvasion:
                 # elif event.key == pygame.K_LEFT:
                 #     self.ship.moving_left = False
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
 
             
     # 处理按下按键的方法
@@ -189,6 +204,19 @@ class AlienInvasion:
             # 删除现有的子弹并创建一个新的外星舰队
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
+
+            # 提高等级
+            self.stats.level += 1
+            self.sb.prep_level()
+
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.sb.prep_score()
+            # 最高分
+            self.sb.check_high_score()
+
 
     # 创建单个外星人
     def _create_alien(self, x_position,y_position):
@@ -269,15 +297,14 @@ class AlienInvasion:
         # 检查是否有外星人到达了屏幕的下边缘
         self._check_aliens_bottom()
     
-   
-            
-
     def _ship_hit(self):
         """响应飞船和外星人的碰撞"""
         """响应飞船和外星人的碰撞"""
         if self.stats.ships_left > 1:
             # 将 ships_left 减 1
             self.stats.ships_left -= 1
+            # 剩余飞船数量
+            self.sb.prep_ships()
             # 清空外星人列表和子弹列表
             self.bullets.empty()
             self.aliens.empty()
@@ -288,7 +315,32 @@ class AlienInvasion:
             sleep(0.5)
         else:
             self.game_active = False
-
+            # 显示光标
+            pygame.mouse.set_visible(True)
+    
+    def _check_play_button(self, mouse_pos):
+        """在玩家单击 Play 按钮时开始新游戏"""
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.game_active:
+            # 还原游戏设置
+            self.settings.initialize_dynamic_settings()
+            # 重置游戏的统计信息
+            self.stats.reset_stats()
+            self.game_active = True
+            # 显示成绩
+            self.sb.prep_score()
+            # 显示等级
+            self.sb.prep_level()
+            # 显示剩余飞船数量
+            self.sb.prep_ships()
+            # 清空外星人列表和子弹列表
+            self.bullets.empty()
+            self.aliens.empty()
+            # 创建一个新的外星舰队，并将飞船放在屏幕底部的中央
+            self._create_fleet()
+            self.ship.center_ship()
+            # 隐藏光标
+            pygame.mouse.set_visible(False)
 
 if __name__ == '__main__':
     # 创建游戏实例并运行游戏
